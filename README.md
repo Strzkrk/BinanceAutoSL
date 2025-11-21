@@ -31,6 +31,9 @@ venv\Scripts\python -m PyInstaller BinanceAutoSL.spec
 ```
 Resulting exe: `dist/BinanceAutoSL.exe`.
 
+## UI Preview
+![Binance Auto SL/TP UI](docs/image.jpg)
+
 ## Features
 - Live price display for the selected USDT pair (updated every second).
 - Percent-of-balance calculator writes the rounded base quantity into the order field.
