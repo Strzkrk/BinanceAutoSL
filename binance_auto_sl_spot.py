@@ -46,6 +46,8 @@ class ToolTip:
 
         self.tipwindow = tw = tk.Toplevel(self.widget)
         tw.wm_overrideredirect(True)
+        tw.attributes("-topmost", True)  # keep tooltip above all app windows
+        tw.lift()
         tw.wm_geometry(f"+{x}+{y}")
 
         label = tk.Label(
@@ -699,8 +701,8 @@ def on_calc_from_percent(event=None, show_error: bool = True):
     entry_qty.insert(0, fmt_decimal(base_amount_rounded))
 
     label_pct_info.configure(
-        text=f" → {usdt_to_spend:.2f} USDT"
-                )
+        text=f"~ {usdt_to_spend:.2f} USDT -> {fmt_decimal(base_amount_rounded)} {base_asset}"
+    )
     if show_error:
         log(f"[INFO] % buy: {pct}% USDT -> {usdt_to_spend:.2f} USDT -> {fmt_decimal(base_amount_rounded)} {base_asset}")
 def on_buy_spot():
@@ -942,31 +944,31 @@ auto_refresh()
 # =========================
 # region TOOLTIPS
 # =========================
-add_tooltip(label_usdt, "Freies USDT-Guthaben auf deinem Spot-Konto.")
-add_tooltip(label_total, "Grob geschätzter Gesamtwert deines Spot-Kontos in USDT.")
+add_tooltip(label_usdt, "Free USDT balance on your spot account.")
+add_tooltip(label_total, "Approximate total value of your spot account in USDT.")
 
-add_tooltip(label_symbol, "Handelspaar wählen, z.B. BNBUSDT (Basiscoin / Quote USDT).")
-add_tooltip(combo_symbol, "Liste der wichtigsten USDT-Paare. Bestimmt alle Aktionen (+, +SL, -*, SL*, !SL*).")
+add_tooltip(label_symbol, "Trading pair, e.g. BNBUSDT (base / quote).")
+add_tooltip(combo_symbol, "Pick a USDT pair. This selection drives all actions (+, +SL, -*, SL*, !SL*).")
 
-add_tooltip(label_qty, "Menge des Basiscoins, die du kaufen/verkaufen möchtest (z.B. 0.01 BNB).")
-add_tooltip(entry_qty, "Eingabe der Basiscoin-Menge. Wird von '+', '+SL' verwendet.")
+add_tooltip(label_qty, "Base-asset amount you want to buy or sell (e.g. 0.01 BNB).")
+add_tooltip(entry_qty, "Quantity field used by '+' and '+SL' after the % calculator.")
 
-add_tooltip(label_sl, "Stop-Loss-Prozente:\nTrigger = ab diesem Verlust löst SL aus,\nLimit = Limit-Preis (meist etwas tiefer).")
-add_tooltip(entry_sl_trigger, "SL Trigger %: wie viel unter Entry/Aktuell der Stop ausgelöst wird (z.B. 1 = -1%).")
-add_tooltip(entry_sl_limit, "SL Limit %: Limit-Preis für die SL-Order.\nMeist leicht grösserer Verlust als Trigger (z.B. 1.2%).")
+add_tooltip(label_sl, "Stop-loss percentages: Trigger becomes stopPrice, Limit becomes price (usually a bit lower).")
+add_tooltip(entry_sl_trigger, "SL trigger % below entry/current price where stopPrice should fire (e.g. 1 = -1%).")
+add_tooltip(entry_sl_limit, "SL limit % sets the limit price; typically slightly deeper than the trigger (e.g. 1.2%).")
 
-add_tooltip(label_pct, "Prozent deines freien USDT-Guthabens, das du in dieses Symbol investieren willst.")
-add_tooltip(entry_pct, "Eingabe des Prozentsatzes (z.B. 10 = 10% von deinem freien USDT).")
-add_tooltip(label_pct_info, "Zeigt die umgerechnete USDT-Summe und resultierende Coin-Menge an.")
+add_tooltip(label_pct, "Percent of your free USDT balance you want to allocate to this symbol.")
+add_tooltip(entry_pct, "Enter % of free USDT to spend (e.g. 10 = 10% of your free USDT).")
+add_tooltip(label_pct_info, "Shows the converted USDT amount and resulting base-asset quantity.")
 
-add_tooltip(btn_buy, "+ : Market Buy ohne Stop-Loss.\nKauft (nach Calc) die im Quantity-Feld angegebene Menge des Basiscoins.")
-add_tooltip(btn_buy_sl, "+SL : Market Buy mit sofortigem Stop-Loss.\nNutzt Calc, dann Quantity + SL Trigger/Limit %, um Entry + SL in einem Schritt zu setzen.")
-add_tooltip(btn_sell_all, "-* : Verkauft deine gesamte freie Coin-Menge dieses Symbols per Market Sell.\nBestehende SL/TP-Orders für dieses Symbol werden vorher gelöscht.")
-add_tooltip(btn_add_sl, "SL* : Setzt/aktualisiert einen Stop-Loss für alle freien Coins\nim gewählten Symbol, ohne neu zu kaufen.\nNutzt aktuelle SL Trigger/Limit %-Eingaben.")
-add_tooltip(btn_clear_sl, "!SL* : Löscht alle SL/TP-Orders nur für das aktuell gewählte Symbol.")
+add_tooltip(btn_buy, "+ : Market buy without SL. Recalculates qty from % and buys that amount.")
+add_tooltip(btn_buy_sl, "+SL : Market buy then place SL. Uses % calc + qty + SL Trigger/Limit % in one flow.")
+add_tooltip(btn_sell_all, "-* : Market sell the entire FREE balance of this base asset. Existing SL/TP orders for this symbol are canceled first.")
+add_tooltip(btn_add_sl, "SL* : Set/refresh a stop-loss for all FREE coins of this symbol without buying. Uses current SL Trigger/Limit % fields.")
+add_tooltip(btn_clear_sl, "!SL* : Cancel all SL/TP orders for the currently selected symbol only.")
 
-add_tooltip(label_log, "Ausgabe aller Aktionen, API-Fehler und Order-Informationen.")
-add_tooltip(log_text, "Scrollbarer Log der letzten Aktionen.\nHier siehst du Kauf/Verkauf, gesetzte SL und eventuelle Fehler.")
+add_tooltip(label_log, "Output of actions, API errors, and order information.")
+add_tooltip(log_text, "Scrollable log of recent actions, buys/sells, SL placements, and errors.")
 # endregion
 
 root.mainloop()
