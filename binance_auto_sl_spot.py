@@ -967,8 +967,6 @@ add_tooltip(btn_sell_all, "-* : Market sell the entire FREE balance of this base
 add_tooltip(btn_add_sl, "SL* : Set/refresh a stop-loss for all FREE coins of this symbol without buying. Uses current SL Trigger/Limit % fields.")
 add_tooltip(btn_clear_sl, "!SL* : Cancel all SL/TP orders for the currently selected symbol only.")
 
-add_tooltip(label_log, "Output of actions, API errors, and order information.")
-add_tooltip(log_text, "Scrollable log of recent actions, buys/sells, SL placements, and errors.")
 # endregion
 
 root.mainloop()
