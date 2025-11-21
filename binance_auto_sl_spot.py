@@ -209,8 +209,8 @@ def get_total_usdt_value() -> Decimal:
 def refresh_account_labels():
     usdt = get_usdt_balance()
     total = get_total_usdt_value()
-    label_usdt.configure(text=f"free: {usdt:.2f}")
-    label_total.configure(text=f"total: {total:.2f} USDT")
+    label_usdt.configure(text=f"free: {usdt:.0f}")
+    label_total.configure(text=f"total: {total:.0f} USDT")
 
 # =========================
 # TRADING FUNCTIONS
@@ -693,32 +693,29 @@ def on_calc_from_percent(event=None, show_error: bool = True):
     base_amount = usdt_to_spend / price
     tick_size, step_size, min_notional = get_filters(symbol)
     base_amount_rounded = round_down_step(base_amount, step_size)
+    rounded_str = fmt_decimal(base_amount_rounded)
 
     info = get_symbol_info_cached(symbol)
     base_asset = info.get("baseAsset", "BASE")
 
-    entry_qty.delete(0, "end")
-    entry_qty.insert(0, fmt_decimal(base_amount_rounded))
-
     label_pct_info.configure(
-        text=f"~ {usdt_to_spend:.2f} USDT -> {fmt_decimal(base_amount_rounded)} {base_asset}"
+        text=f"~ {usdt_to_spend:.2f} USDT"
     )
     if show_error:
         log(f"[INFO] % buy: {pct}% USDT -> {usdt_to_spend:.2f} USDT -> {fmt_decimal(base_amount_rounded)} {base_asset}")
+    return rounded_str
 def on_buy_spot():
     # immer zuerst kalkulieren
-    on_calc_from_percent()
+    qty = on_calc_from_percent()
     symbol = combo_symbol.get().strip().upper()
-    qty = entry_qty.get().strip()
     if not symbol or not qty:
         messagebox.showerror("Error", "Symbol and quantity required.")
         return
     buy_spot(symbol, qty)
 def on_buy_spot_sl():
     # auch hier immer zuerst Calc ausführen
-    on_calc_from_percent()
+    qty = on_calc_from_percent()
     symbol = combo_symbol.get().strip().upper()
-    qty = entry_qty.get().strip()
     sl_trig = entry_sl_trigger.get().strip()
     sl_lim = entry_sl_limit.get().strip()
 
@@ -800,7 +797,7 @@ main_frame.grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
 # layout for 5 columns now (all even)
 for col in range(5):
     main_frame.grid_columnconfigure(col, weight=1)
-main_frame.grid_rowconfigure(6, weight=1)
+main_frame.grid_rowconfigure(7, weight=1)
 
 # Account info
 info_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -812,9 +809,6 @@ label_usdt.grid(row=0, column=0, sticky="w", padx=2, pady=2)
 
 label_total = ctk.CTkLabel(info_frame, text="total: - USDT", font=base_font, anchor="w")
 label_total.grid(row=0, column=1, sticky="w", padx=2, pady=2)
-
-label_symbol_value = ctk.CTkLabel(info_frame, text="price: -", font=base_font, anchor="w")
-label_symbol_value.grid(row=0, column=2, sticky="w", padx=2, pady=2)
 
 # Symbol dropdown + Quantity in one row (1/2/1/1)
 label_symbol = ctk.CTkLabel(main_frame, text="Coin:", font=base_font, anchor="w")
@@ -830,44 +824,43 @@ combo_symbol.set("BNBUSDT")
 combo_symbol.grid(row=1, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
 combo_symbol.bind("<KeyRelease>", on_symbol_type)
 
-label_qty = ctk.CTkLabel(main_frame, text="Value:", font=base_font, anchor="w")
-label_qty.grid(row=1, column=3, sticky="ew", padx=2, pady=2)
+label_price = ctk.CTkLabel(main_frame, text="Price:", font=base_font, anchor="w")
+label_price.grid(row=1, column=3, sticky="ew", padx=2, pady=2)
 
-entry_qty = ctk.CTkEntry(main_frame, font=base_font)
-entry_qty.insert(0, "0.01")
-entry_qty.grid(row=1, column=4, sticky="ew", padx=2, pady=2)
+label_price_value = ctk.CTkLabel(main_frame, text="-", font=base_font, anchor="w")
+label_price_value.grid(row=1, column=4, sticky="ew", padx=2, pady=2)
 
 # SL Trigger / Limit % (3/1/1)
 label_sl = ctk.CTkLabel(main_frame, text="SL Trig/Lim %", font=base_font, anchor="w")
-label_sl.grid(row=2, column=0, columnspan=3, sticky="ew", padx=2, pady=2)
+label_sl.grid(row=3, column=0, columnspan=3, sticky="ew", padx=2, pady=2)
 
 entry_sl_trigger = ctk.CTkEntry(main_frame, font=base_font)
 entry_sl_trigger.insert(0, "0.5")
-entry_sl_trigger.grid(row=2, column=3, sticky="ew", padx=2, pady=2)
+entry_sl_trigger.grid(row=3, column=3, sticky="ew", padx=2, pady=2)
 
 entry_sl_limit = ctk.CTkEntry(main_frame, font=base_font)
 entry_sl_limit.insert(0, "0.6")
-entry_sl_limit.grid(row=2, column=4, sticky="ew", padx=2, pady=2)
+entry_sl_limit.grid(row=3, column=4, sticky="ew", padx=2, pady=2)
 
 entry_sl_trigger.bind("<KeyRelease>", on_sl_trigger_change)
 entry_sl_trigger.bind("<FocusOut>", on_sl_trigger_change)
 
 # % of USDT balance (1/1/3)
 label_pct = ctk.CTkLabel(main_frame, text="% USDT:", font=base_font, anchor="w")
-label_pct.grid(row=3, column=0, sticky="ew", padx=2, pady=2)
+label_pct.grid(row=4, column=0, sticky="ew", padx=2, pady=2)
 
 entry_pct = ctk.CTkEntry(main_frame, font=base_font)
 entry_pct.insert(0, "10")
-entry_pct.grid(row=3, column=1, sticky="ew", padx=2, pady=2)
+entry_pct.grid(row=4, column=1, sticky="ew", padx=2, pady=2)
 entry_pct.bind("<KeyRelease>", lambda e: on_calc_from_percent(show_error=False))
 entry_pct.bind("<FocusOut>", lambda e: on_calc_from_percent(show_error=False))
 
 label_pct_info = ctk.CTkLabel(main_frame, text="", font=("Segoe UI", 12), anchor="w")
-label_pct_info.grid(row=3, column=2, columnspan=3, sticky="ew", padx=2, pady=2)
+label_pct_info.grid(row=4, column=2, columnspan=3, sticky="ew", padx=2, pady=2)
 
 # Buttons (1/1/1/1/1)
 btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-btn_frame.grid(row=4, column=0, columnspan=5, padx=2, pady=2, sticky="ew")
+btn_frame.grid(row=5, column=0, columnspan=5, padx=2, pady=2, sticky="ew")
 for col in range(5):
     btn_frame.grid_columnconfigure(col, weight=1)
 
@@ -888,15 +881,18 @@ btn_clear_sl.grid(row=0, column=4, padx=2, pady=2, sticky="ew")
 
 # Log
 label_log = ctk.CTkLabel(main_frame, text="Log:", font=base_font, anchor="w")
-label_log.grid(row=5, column=0, columnspan=5, sticky="w", padx=2, pady=2)
+label_log.grid(row=6, column=0, columnspan=5, sticky="w", padx=2, pady=2)
 
 log_text = ctk.CTkTextbox(
     main_frame,
     height=260,
     font=mono_font
 )
-log_text.grid(row=6, column=0, columnspan=5, sticky="nsew", padx=2, pady=2)
+log_text.grid(row=7, column=0, columnspan=5, sticky="nsew", padx=2, pady=2)
 log_text.configure(state="disabled")
+
+# endregion
+# =========================
 
 # Dynamische Breiten basierend auf Fensterbreite
 resize_after_id = None
@@ -907,8 +903,8 @@ def resize_widgets():
         col = max(60, (total - padding) / 5)
         label_symbol.configure(width=int(col))
         combo_symbol.configure(width=int(col * 2))
-        label_qty.configure(width=int(col))
-        entry_qty.configure(width=int(col))
+        label_price.configure(width=int(col))
+        label_price_value.configure(width=int(col))
         label_sl.configure(width=int(col * 3))
         entry_sl_trigger.configure(width=int(col))
         entry_sl_limit.configure(width=int(col))
@@ -931,7 +927,6 @@ def schedule_resize(event=None):
 
 root.bind("<Configure>", schedule_resize)
 schedule_resize()
-# endregion
 log("[INFO] Binance Auto SL/TP started.")
 on_calc_from_percent()
 # =========================
@@ -947,17 +942,18 @@ auto_refresh()
 def refresh_symbol_value():
     symbol = combo_symbol.get().strip().upper()
     if not symbol:
-        label_symbol_value.configure(text="price: -")
+        label_price_value.configure(text="-")
         root.after(1000, refresh_symbol_value)
         return
     try:
         ticker = client.get_symbol_ticker(symbol=symbol)
         price = Decimal(ticker["price"])
-        label_symbol_value.configure(text=f"{symbol} price: {price:.6f} USDT")
+        price_str = format(price, ".5g")  # show 5 significant digits
+        label_price_value.configure(text=price_str)
     except (BinanceAPIException, BinanceRequestException):
-        label_symbol_value.configure(text=f"{symbol} price: n/a")
+        label_price_value.configure(text="n/a")
     except Exception:
-        label_symbol_value.configure(text="price: n/a")
+        label_price_value.configure(text="n/a")
     root.after(1000, refresh_symbol_value)
 refresh_symbol_value()
 
@@ -966,13 +962,10 @@ refresh_symbol_value()
 # =========================
 add_tooltip(label_usdt, "Free USDT balance on your spot account.")
 add_tooltip(label_total, "Approximate total value of your spot account in USDT.")
-add_tooltip(label_symbol_value, "Live price of the selected symbol in USDT (updates every second).")
+add_tooltip(label_price_value, "Live price of the selected symbol in USDT (updates every second).")
 
 add_tooltip(label_symbol, "Trading pair, e.g. BNBUSDT (base / quote).")
 add_tooltip(combo_symbol, "Pick a USDT pair. This selection drives all actions (+, +SL, -*, SL*, !SL*).")
-
-add_tooltip(label_qty, "Order size input (base-asset amount) used for buys/sells.")
-add_tooltip(entry_qty, "Enter the base-asset quantity. % calculator refills this field for buys.")
 
 add_tooltip(label_sl, "Stop-loss percentages: Trigger becomes stopPrice, Limit becomes price (usually a bit lower).")
 add_tooltip(entry_sl_trigger, "SL trigger % below entry/current price where stopPrice should fire (e.g. 1 = -1%).")
