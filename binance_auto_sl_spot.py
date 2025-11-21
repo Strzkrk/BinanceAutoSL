@@ -813,6 +813,9 @@ label_usdt.grid(row=0, column=0, sticky="w", padx=2, pady=2)
 label_total = ctk.CTkLabel(info_frame, text="total: - USDT", font=base_font, anchor="w")
 label_total.grid(row=0, column=1, sticky="w", padx=2, pady=2)
 
+label_symbol_value = ctk.CTkLabel(info_frame, text="price: -", font=base_font, anchor="w")
+label_symbol_value.grid(row=0, column=2, sticky="w", padx=2, pady=2)
+
 # Symbol dropdown + Quantity in one row (1/2/1/1)
 label_symbol = ctk.CTkLabel(main_frame, text="Coin:", font=base_font, anchor="w")
 label_symbol.grid(row=1, column=0, sticky="ew", padx=2, pady=2)
@@ -827,7 +830,7 @@ combo_symbol.set("BNBUSDT")
 combo_symbol.grid(row=1, column=1, columnspan=2, sticky="ew", padx=2, pady=2)
 combo_symbol.bind("<KeyRelease>", on_symbol_type)
 
-label_qty = ctk.CTkLabel(main_frame, text="qty:", font=base_font, anchor="w")
+label_qty = ctk.CTkLabel(main_frame, text="Value:", font=base_font, anchor="w")
 label_qty.grid(row=1, column=3, sticky="ew", padx=2, pady=2)
 
 entry_qty = ctk.CTkEntry(main_frame, font=base_font)
@@ -941,17 +944,35 @@ def auto_refresh():
         root.after(5000, auto_refresh)
 auto_refresh()
 
+def refresh_symbol_value():
+    symbol = combo_symbol.get().strip().upper()
+    if not symbol:
+        label_symbol_value.configure(text="price: -")
+        root.after(1000, refresh_symbol_value)
+        return
+    try:
+        ticker = client.get_symbol_ticker(symbol=symbol)
+        price = Decimal(ticker["price"])
+        label_symbol_value.configure(text=f"{symbol} price: {price:.6f} USDT")
+    except (BinanceAPIException, BinanceRequestException):
+        label_symbol_value.configure(text=f"{symbol} price: n/a")
+    except Exception:
+        label_symbol_value.configure(text="price: n/a")
+    root.after(1000, refresh_symbol_value)
+refresh_symbol_value()
+
 # =========================
 # region TOOLTIPS
 # =========================
 add_tooltip(label_usdt, "Free USDT balance on your spot account.")
 add_tooltip(label_total, "Approximate total value of your spot account in USDT.")
+add_tooltip(label_symbol_value, "Live price of the selected symbol in USDT (updates every second).")
 
 add_tooltip(label_symbol, "Trading pair, e.g. BNBUSDT (base / quote).")
 add_tooltip(combo_symbol, "Pick a USDT pair. This selection drives all actions (+, +SL, -*, SL*, !SL*).")
 
-add_tooltip(label_qty, "Base-asset amount you want to buy or sell (e.g. 0.01 BNB).")
-add_tooltip(entry_qty, "Quantity field used by '+' and '+SL' after the % calculator.")
+add_tooltip(label_qty, "Order size input (base-asset amount) used for buys/sells.")
+add_tooltip(entry_qty, "Enter the base-asset quantity. % calculator refills this field for buys.")
 
 add_tooltip(label_sl, "Stop-loss percentages: Trigger becomes stopPrice, Limit becomes price (usually a bit lower).")
 add_tooltip(entry_sl_trigger, "SL trigger % below entry/current price where stopPrice should fire (e.g. 1 = -1%).")
